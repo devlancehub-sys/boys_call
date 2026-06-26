@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "63934633031",
+    "project_id": "audioboyscall-1",
+    "storage_bucket": "audioboyscall-1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:63934633031:android:da82a3b0fcde24b882cd62",
+        "android_client_info": {
+          "package_name": "com.lovecall.love_call_boys"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3qHOen6SKTh_VYk16VOZ_cCDLj81Knp8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
