@@ -257,7 +257,7 @@ class _EndCallButton extends StatelessWidget {
             height: 72,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.error,
+              color: AppColors.error, 
               boxShadow: [
                 BoxShadow(
                   color: AppColors.error.withValues(alpha: 0.4),

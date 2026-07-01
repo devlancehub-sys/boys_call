@@ -131,13 +131,34 @@ class CallingNotifier extends Notifier<CallingState> {
         _callSession.unregister();
       }
       _clearSocketHandlers();
+      try {
+        _zego.destroy();
+      } catch (_) {}
+      _resetAllCallState();
     });
 
     return const CallingState();
   }
 
+  void _resetAllCallState() {
+    callId = null;
+    roomId = null;
+    zegoAppId = null;
+    zegoToken = null;
+    _hasEnded = false;
+    _wasConnected = false;
+    _callAccepted = false;
+    _zegoJoined = false;
+    _backgroundRetryGen = 0;
+    _lastVoiceError = null;
+    _socketDownSince = 0;
+
+    state = const CallingState();
+  }
+
   /// Register handlers before navigation so early socket events are not missed.
   void registerOutgoingCall(int id) {
+    _resetAllCallState();
     callId = id;
     _callSession.register(id, _handleRemoteEnd);
     unawaited(_presence.setCallActive(true));
@@ -146,6 +167,16 @@ class CallingNotifier extends Notifier<CallingState> {
   void init(Map<String, dynamic>? args) {
     _session++;
     final session = _session;
+
+    // Set the state synchronously first to prevent layout flash
+    final data = args ?? {};
+    state = CallingState(
+      status: CallStatus.ringing,
+      hostName: data['host_name']?.toString() ?? 'Host',
+      hostAvatarUrl: data['host_avatar_url']?.toString(),
+      ratePerMinute: JsonParse.toDouble(data['rate_per_minute']),
+    );
+
     unawaited(_initSession(session, args: args));
   }
 
@@ -510,6 +541,14 @@ class CallingNotifier extends Notifier<CallingState> {
       _timer?.cancel();
     }
     state = state.copyWith(status: CallStatus.ended, isEnding: false);
+    
+    // Reset state after navigation transition finishes (500ms)
+    Timer(const Duration(milliseconds: 500), () {
+      if (!_disposed) {
+        _resetAllCallState();
+      }
+    });
+
     _navigator.exitCallFlow();
   }
 
@@ -604,13 +643,7 @@ class CallingNotifier extends Notifier<CallingState> {
         } catch (_) {}
       }
 
-      if (_zegoJoined) {
-        await _zego.leaveRoom();
-        await _presence.restoreAfterCall();
-        _zegoJoined = false;
-      } else {
-        await _presence.setCallActive(false);
-      }
+      await _cleanup();
 
       unawaited(_refreshWalletBalance());
       if (billing != null) {
@@ -631,8 +664,12 @@ class CallingNotifier extends Notifier<CallingState> {
   Future<void> _cleanup() async {
     _timer?.cancel();
     _stopBackgroundVoiceRetry();
+    try {
+      await _zego.destroy().timeout(const Duration(milliseconds: 500));
+    } catch (e) {
+      debugPrint('[Calling] Zego engine destroy failed or timed out: $e');
+    }
     if (_zegoJoined) {
-      await _zego.leaveRoom();
       await _presence.restoreAfterCall();
       _zegoJoined = false;
     } else {

@@ -53,21 +53,11 @@ class AppNavigator {
 
   void pop<T extends Object?>([T? result]) => _router.pop(result);
 
-  /// Leaves calling/incoming screens and returns to the main app shell.
   void exitCallFlow() {
-    if (AppRoutes.isCallRoute(currentLocation)) {
-      goHome();
-      return;
-    }
-
-    var guard = 0;
-    while (AppRoutes.isCallRoute(currentLocation) && canPop && guard < 4) {
+    if (canPop) {
       pop();
-      guard++;
     }
-    if (AppRoutes.isCallRoute(currentLocation)) {
-      goHome();
-    }
+    goHome();
   }
 
   void goShellTab(int index) {
