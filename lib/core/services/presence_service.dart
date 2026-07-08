@@ -90,21 +90,9 @@ class PresenceService with WidgetsBindingObserver {
     _keepAliveDuringCall = false;
   }
 
-  /// Disconnect socket after a call, then reconnect for normal online presence.
   Future<void> restoreAfterCall() async {
-    final epoch = ++_restoreEpoch;
-
-    await Future<void>.delayed(const Duration(milliseconds: 50));
-    if (epoch != _restoreEpoch || _keepAliveDuringCall) return;
-
     _keepAliveDuringCall = false;
-    _socket.disconnect();
-    isOnline.value = false;
-
     if (!_foreground || !_storage.isLoggedIn) return;
-
-    await Future<void>.delayed(const Duration(milliseconds: 350));
-    if (epoch != _restoreEpoch || _keepAliveDuringCall) return;
     await goOnline();
   }
 

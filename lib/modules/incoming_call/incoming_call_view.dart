@@ -38,6 +38,7 @@ class _IncomingCallViewState extends ConsumerState<IncomingCallView>
   @override
   void dispose() {
     _pulseController.dispose();
+    ref.read(incomingCallProvider.notifier).reset();
     super.dispose();
   }
 

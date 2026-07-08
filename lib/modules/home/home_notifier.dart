@@ -11,6 +11,8 @@ import '../../core/services/socket_service.dart';
 import '../../core/utils/parse_utils.dart';
 import '../../data/repositories/hosts_repository_impl.dart';
 import '../../domain/repositories/hosts_repository.dart';
+import '../calling/calling_notifier.dart';
+import '../incoming_call/incoming_call_notifier.dart';
 
 final hostsRepositoryProvider = Provider<HostsRepository>((ref) {
   return HostsRepositoryImpl(ref.read(apiServiceProvider));
@@ -158,7 +160,9 @@ class HomeNotifier extends Notifier<HomeState> {
   }
 
   void _handleIncomingCall(Map<String, dynamic> data) {
-    if (_navigator.isOnCallScreen) return;
+    final isBusy = ref.read(callingProvider).status != CallStatus.ended ||
+        ref.read(incomingCallProvider).callData.isNotEmpty;
+    if (isBusy) return;
     _navigator.pushIncomingCall(data);
   }
 

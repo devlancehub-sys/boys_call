@@ -24,7 +24,7 @@ enum CallStatus { ringing, connected, ended }
 
 class CallingState {
   const CallingState({
-    this.status = CallStatus.ringing,
+    this.status = CallStatus.ended,
     this.durationSeconds = 0,
     this.hostName = 'Host',
     this.hostAvatarUrl,
@@ -484,6 +484,8 @@ class CallingNotifier extends Notifier<CallingState> {
       );
       if (result.ok) {
         _zegoJoined = true;
+        debugPrint('[Call Lifecycle] Call connected (Zego joined). CallId: $callId');
+        AppMessenger.show('[Call Lifecycle]', 'Zego connected! Joined Room: $roomId');
         await _presence.setCallActive(true);
         AppMessenger.show('Voice connected', 'Room $roomId', duration: const Duration(seconds: 2));
         return true;
@@ -589,6 +591,8 @@ class CallingNotifier extends Notifier<CallingState> {
     } finally {
       if (!_hasEnded) {
         _hasEnded = true;
+        debugPrint('[Call Lifecycle] Call ended locally. CallId: $callId');
+        AppMessenger.show('[Call Lifecycle]', 'Call ended locally (Call ID: $callId)');
         _callSession.unregister();
         _clearSocketHandlers();
         await _cleanup();
@@ -631,6 +635,8 @@ class CallingNotifier extends Notifier<CallingState> {
     }
 
     _hasEnded = true;
+    debugPrint('[Call Lifecycle] Call ended remotely. CallId: $callId');
+    AppMessenger.show('[Call Lifecycle]', 'Call ended remotely (Call ID: $callId): $message');
     _stopBackgroundVoiceRetry();
     _callSession.unregister();
     _clearSocketHandlers();
@@ -664,6 +670,8 @@ class CallingNotifier extends Notifier<CallingState> {
   Future<void> _cleanup() async {
     _timer?.cancel();
     _stopBackgroundVoiceRetry();
+    debugPrint('[Call Lifecycle] Zego cleanup (destroy engine) started. CallId: $callId');
+    AppMessenger.show('[Call Lifecycle]', 'Zego cleanup (destroy engine) started');
     try {
       await _zego.destroy().timeout(const Duration(milliseconds: 500));
     } catch (e) {

@@ -97,9 +97,17 @@ class HostProfileNotifier extends Notifier<HostProfileState> {
         return;
       }
 
+      print('[Call Lifecycle] New call attempt: initiating call to hostId: $hostId');
+      AppMessenger.show('[Call Lifecycle]', '1. Initiating new call attempt to host $hostId...');
       final res = await _api.post(ApiConstants.callsInitiate, data: {'host_id': hostId});
+      print('[Call Lifecycle] Backend response received for initiate call: $res');
       final data = JsonParse.toMap(res['data']);
-      if (data == null) return;
+      if (data == null) {
+        AppMessenger.show('[Call Lifecycle]', 'Error: Backend returned empty data');
+        return;
+      }
+
+      AppMessenger.show('[Call Lifecycle]', '2. Call initiated! Call ID: ${data['call_id']}, Room ID: ${data['room_id']}');
 
       final callId = JsonParse.toInt(data['call_id']);
       final appId = JsonParse.toInt(data['zego_app_id']);
@@ -127,6 +135,8 @@ class HostProfileNotifier extends Notifier<HostProfileState> {
         'is_outgoing': true,
       });
     } catch (e) {
+      print('[Call Lifecycle] Call attempt failed: $e');
+      AppMessenger.show('[Call Lifecycle] Call failed', callErrorMessage(_api.errorMessage(e)));
       AppMessenger.show('Call failed', callErrorMessage(_api.errorMessage(e)));
     } finally {
       state = state.copyWith(isCalling: false);

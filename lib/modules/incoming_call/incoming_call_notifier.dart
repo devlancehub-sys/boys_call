@@ -227,4 +227,8 @@ class IncomingCallNotifier extends Notifier<IncomingCallState> {
       state = state.copyWith(isLoading: false);
     }
   }
+
+  void reset() {
+    state = const IncomingCallState();
+  }
 }

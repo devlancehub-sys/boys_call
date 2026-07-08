@@ -5,6 +5,7 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 
 import '../config/app_config.dart';
 import '../navigation/app_navigator.dart';
+import '../messaging/app_messenger.dart';
 import 'call_session_service.dart';
 import 'presence_service.dart';
 
@@ -74,6 +75,7 @@ class SocketService {
 
     _socket!.on('incoming_call', (data) {
       final map = _toMap(data);
+      debugPrint('[Call Lifecycle] Socket received event: incoming_call | data: $map');
       if (onIncomingCall != null) {
         onIncomingCall!(map);
       } else {
@@ -84,14 +86,30 @@ class SocketService {
     _socket!.on('call_ended', (data) {
       final map = _toMap(data);
       debugPrint(
-        '[Socket] call_ended call_id=${map['call_id']} reason=${map['reason']}',
+        '[Call Lifecycle] Socket received event: call_ended | call_id=${map['call_id']} reason=${map['reason']}',
       );
+      AppMessenger.show('[Call Lifecycle]', 'Socket event: call_ended (Call ID: ${map['call_id']}, Reason: ${map['reason']})');
       unawaited(_callSession.handleCallEnded(map));
     });
 
-    _socket!.on('call_accepted', (data) => onCallAccepted?.call(_toMap(data)));
-    _socket!.on('call_rejected', (data) => onCallRejected?.call(_toMap(data)));
-    _socket!.on('call_missed', (data) => onCallMissed?.call(_toMap(data)));
+    _socket!.on('call_accepted', (data) {
+      final map = _toMap(data);
+      debugPrint('[Call Lifecycle] Socket received event: call_accepted | data: $map');
+      AppMessenger.show('[Call Lifecycle]', 'Socket event: call_accepted (Call ID: ${map['call_id']})');
+      onCallAccepted?.call(map);
+    });
+    _socket!.on('call_rejected', (data) {
+      final map = _toMap(data);
+      debugPrint('[Call Lifecycle] Socket received event: call_rejected | data: $map');
+      AppMessenger.show('[Call Lifecycle]', 'Socket event: call_rejected (Call ID: ${map['call_id']})');
+      onCallRejected?.call(map);
+    });
+    _socket!.on('call_missed', (data) {
+      final map = _toMap(data);
+      debugPrint('[Call Lifecycle] Socket received event: call_missed | data: $map');
+      AppMessenger.show('[Call Lifecycle]', 'Socket event: call_missed (Call ID: ${map['call_id']})');
+      onCallMissed?.call(map);
+    });
     _socket!.on('wallet_updated', (data) => onWalletUpdated?.call(_toMap(data)));
     _socket!.on('host_online', (data) => onHostOnline?.call(_toMap(data)));
     _socket!.on('host_offline', (data) => onHostOffline?.call(_toMap(data)));
